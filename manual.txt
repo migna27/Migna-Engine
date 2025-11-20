@@ -1,0 +1,146 @@
+﻿📋 Manual de Ejecución Granular: Migna Engine
+Objetivo: Desglose atómico de tareas para el desarrollo diario.
+Uso: Marca cada casilla [ ] conforme completes la tarea. No avances al siguiente Hito sin completar el anterior.
+🗓️ FASE 1: INFRAESTRUCTURA Y CONECTIVIDAD (Meses 1-5)
+Hito 1.1: Infraestructura Base y "Hola Mundo"
+Meta: Un entorno de desarrollo limpio donde Python y Svelte se comunican sin errores.
+Tarea 1.1.1: Configuración del Entorno Backend (Python)
+* [ ] Crear entorno virtual: Ejecutar python -m venv venv para aislar dependencias.
+* [ ] Definir dependencias: Crear requirements.txt con versiones fijas (fastapi==0.109.0, uvicorn==0.27.0) para evitar roturas futuras.
+* [ ] Configurar Calidad: Crear archivo pyproject.toml para configurar Ruff. Reglas: línea máxima 88 caracteres, ignorar errores E501.
+* [ ] Estructura de Carpetas: Crear backend/app/api, backend/app/core, backend/app/services. Poner un __init__.py en cada una.
+Tarea 1.1.2: El Servidor API (FastAPI)
+* [ ] Endpoint Raíz: Crear main.py. Definir ruta @app.get("/") que devuelva {"engine": "Migna", "status": "ok"}.
+* [ ] Endpoint de Salud: Crear @app.get("/api/health"). Debe devolver versión del motor y tiempo de actividad (uptime).
+* [ ] Configuración CORS: Habilitar CORSMiddleware permitiendo allow_origins=["*"] (temporalmente) para que el frontend no sea bloqueado.
+Tarea 1.1.3: Configuración del Entorno Frontend (SvelteKit)
+* [ ] Inicialización: Ejecutar npm create svelte@latest. Elegir "Skeleton Project" y "TypeScript".
+* [ ] Estilos: Instalar TailwindCSS (npx svelte-add@latest tailwindcss).
+* [ ] Librería de UI: Instalar Skeleton UI (npm install @skeletonlabs/skeleton). Configurar el tema en app.html (body class).
+* [ ] Conexión: Crear componente StatusBadge.svelte. Usar onMount para hacer un fetch a /api/health. Si responde 200, mostrar un punto verde.
+✅ Criterio de Aceptación: Al ejecutar python main.py y npm run dev, abres el navegador y ves "Migna Engine v0.1: ONLINE" en verde.
+Hito 1.2: El Lenguaje MignaScript (.mn)
+Meta: Que el sistema entienda que Ana: "Hola" significa "Mostrar texto".
+Tarea 1.2.1: Gramática Lark (Reglas del Juego)
+* [ ] Archivo Grammar: Crear backend/app/core/grammar.lark.
+* [ ] Regla Diálogo: Definir que WORD ":" ESCAPED_STRING se convierta en un nodo dialogue_node.
+* [ ] Regla Comandos: Definir que "@" WORD se convierta en un nodo command_node.
+* [ ] Regla Argumentos: Permitir key=value después de un comando.
+Tarea 1.2.2: El Parser (Traductor)
+* [ ] Clase Parser: Crear MignaParser en Python. Cargar el archivo .lark.
+* [ ] Transformer: Crear clase MignaTransformer(Transformer).
+   * Método dialogue: Convertir el token de Lark en {"type": "say", "character": "Ana", "text": "Hola"}.
+   * Método command: Convertir @bg file=a.png en {"type": "bg", "file": "a.png"}.
+Tarea 1.2.3: API de Compilación
+* [ ] Endpoint: Crear POST /api/compiler/parse. Recibe texto plano en el cuerpo.
+* [ ] Respuesta: Devuelve el JSON estructurado (AST).
+* [ ] Manejo de Errores: Envolver el parser en try/except. Si Lark falla, capturar UnexpectedToken y devolver {"error": "Sintaxis inválida", "line": X, "col": Y}.
+✅ Criterio de Aceptación: Puedes enviar un string con código .mn a través de Swagger UI (/docs) y recibir un JSON limpio.
+Hito 1.3: Runner Visual y Red
+Meta: Ver imágenes y texto en pantalla, controlados desde el celular.
+Tarea 1.3.1: Motor Gráfico (Pixi.js)
+* [ ] Canvas Component: Crear GameView.svelte. Montar PIXI.Application en un div.
+* [ ] Bucle de Juego: Suscribirse a app.ticker.add(). (Aunque sea una VN, necesitamos el loop para animaciones suaves).
+* [ ] Cargador: Implementar Assets.load(). Crear función que reciba una URL y muestre un PIXI.Sprite.
+Tarea 1.3.2: Intérprete de JSON (El Cerebro del Runner)
+* [ ] Store de Estado: Crear gameStore.js (Svelte Store) con currentIndex y sceneData.
+* [ ] Función Next: Crear función advance().
+   * Lee sceneData[currentIndex].
+   * Si es texto -> Actualizar variable currentDialog (mostrada en HTML sobre el canvas).
+   * Si es comando -> Ejecutar función Pixi (cambiar fondo).
+   * Incrementar currentIndex.
+Tarea 1.3.3: Hot Reload (La Magia)
+* [ ] Watchdog (Python): Crear servicio que monitoree ./projects/active/scripts/*.mn.
+* [ ] WebSocket: Crear endpoint /ws. Al conectar, guardar el cliente en una lista active_connections.
+* [ ] Broadcast: Cuando Watchdog detecte evento modified, llamar a parse_file() y enviar el nuevo JSON por el WebSocket a todos los clientes.
+* [ ] Reacción Frontend: Al recibir mensaje WS, actualizar sceneData sin reiniciar currentIndex (si es posible) o reiniciar escena.
+Tarea 1.3.4: Conectividad Móvil (QR)
+* [ ] Detective de IP: Implementar script get_local_ip (el que usa sockets UDP ficticios).
+* [ ] Endpoint IP: GET /api/network/address devuelve la IP local (ej. 192.168.1.50).
+* [ ] Generador QR: Usar librería JS qrcode. Pintar la URL http://{IP}:5173 en un canvas pequeño en el editor.
+✅ Criterio de Aceptación: Escaneas el QR con tu celular, aparece el juego. Cambias el texto en la PC, guardas, y el texto cambia en el celular instantáneamente.
+💡 FASE 2: MOTOR CINEMATOGRÁFICO (Meses 6-10)
+Hito 2.1: Gestión de Assets
+Meta: Que el usuario solo arrastre archivos y el motor haga el trabajo sucio.
+Tarea 2.1.1: Sistema de Archivos (Backend)
+* [ ] Explorador: Endpoint recursivo os.walk para devolver el árbol de carpetas de assets/ en JSON.
+* [ ] Drag & Drop Upload: Endpoint que recibe Multipart/Form-Data. Guarda el archivo en disco.
+Tarea 2.1.2: Pipeline de Optimización
+* [ ] Middleware de Imagen: Al subir imagen:
+   * Abrir con Pillow.
+   * Si es PNG/JPG > 2MB -> Redimensionar (Max 4K) y guardar como .webp (calidad 90).
+   * Guardar miniatura de 64x64px en .cache/thumbs/ para mostrar rápido en el editor.
+Tarea 2.1.3: Integración PSD
+* [ ] Parser PSD: Al subir .psd, usar psd_tools.
+* [ ] Extracción: Iterar capas visibles. Guardar cada una como PNG transparente recortado (trim) al tamaño del contenido.
+* [ ] Manifiesto: Crear archivo personaje.json con la lista de capas y sus coordenadas X/Y originales (offsets).
+Hito 2.2: Iluminación y Gráficos
+Meta: Luces dinámicas en 2D.
+Tarea 2.2.1: Capas de Renderizado (Pixi Layers)
+* [ ] Estructura Z: Crear contenedores fijos: BgContainer, CharContainer, LightContainer, UIContainer.
+* [ ] Sorting: Implementar propiedad zIndex en los sprites para que el usuario pueda ordenar elementos dentro de cada contenedor (@char z=5).
+Tarea 2.2.2: Motor de Luces (Pixi Lights)
+* [ ] Inicialización: Habilitar PIXI.lights.Layer (o DiffuseGroup/NormalGroup).
+* [ ] Normal Maps: Modificar el cargador de sprites. Si cargo ana.png, buscar automáticamente ana_n.png. Si existe, asignarlo como textura normal.
+* [ ] Comando Luz: Implementar @light create. Instanciar PIXI.lights.PointLight.
+Tarea 2.2.3: Gizmos de Edición
+* [ ] Overlay de Edición: Capa HTML/SVG encima del canvas.
+* [ ] Gizmo Luz: Dibujar un círculo amarillo donde está la luz.
+* [ ] Interacción: Usar Moveable. Al arrastrar el círculo HTML, actualizar las coordenadas X/Y de la luz en Pixi y enviar el cambio al Backend para actualizar el .mn (o guardar en memoria).
+Hito 2.3: Cámara y Audio
+Meta: Movimiento y sonido profesional.
+Tarea 2.3.1: Cámara (Pixi Viewport)
+* [ ] Setup: Instanciar Viewport envolviendo el WorldContainer.
+* [ ] Comandos:
+   * @camera zoom level=1.5: Usar GSAP para interpolar viewport.scale.
+   * @camera pan x=100: Usar GSAP para interpolar viewport.center.
+   * @camera shake: Función aleatoria de offset rápida.
+Tarea 2.3.2: Audio (Howler)
+* [ ] Gestor: Singleton AudioSystem.
+* [ ] Capas: Permitir reproducir múltiples IDs de sonido simultáneos marcados como "sync".
+* [ ] Fade: Usar howl.fade(0, 1, 1000) para transiciones suaves.
+🛠️ FASE 3: HERRAMIENTAS DE DISEÑO (Meses 11-14)
+Hito 3.1: Editor Visual
+Meta: Dejar de escribir .mn a mano.
+Tarea 3.1.1: Lista de Comandos
+* [ ] Componente Lista: Crear CommandList.svelte.
+* [ ] Mapeo: Por cada instrucción del JSON, renderizar una "Tarjeta" (Card).
+   * Tarjeta Diálogo: Muestra cara del personaje y texto.
+   * Tarjeta Comando: Muestra icono (Luz, Cámara) y parámetros clave.
+* [ ] Reordenar: Conectar SortableJS. Al soltar, reordenar el array JSON y enviarlo al compilador inverso (JSON -> .mn).
+Tarea 3.1.2: Formularios (Modales)
+* [ ] Modal Genérico: Componente que recibe un esquema JSON y genera inputs.
+* [ ] Edición: Al hacer clic en una Tarjeta, abrir el modal, editar valores y guardar.
+Hito 3.3: GUI Designer (WYSIWYG)
+Meta: Diseñar menús sin CSS.
+Tarea 3.3.1: Lienzo de UI
+* [ ] Modo Diseño: Una ruta /gui-editor con un lienzo en blanco.
+* [ ] Biblioteca: Panel lateral con elementos arrastrables: "Botón", "Panel", "Texto", "Barra".
+Tarea 3.3.2: Manipulación
+* [ ] Moveable: Al seleccionar un elemento en el lienzo, activar manejadores de redimensión/rotación.
+* [ ] Propiedades: Panel lateral para cambiar color de fondo, borde, fuente (mapeado a estilos CSS in-line).
+Tarea 3.3.3: Exportador CSS
+* [ ] Compilador: Función JS que recorre los elementos del lienzo y genera una cadena de texto CSS válida. Guardar como theme.css.
+🔴 FASE 5: SEGURIDAD Y LANZAMIENTO (Meses 17-19)
+Hito 5.1: Cifrado
+Meta: Proteger los assets.
+Tarea 5.1.1: Encriptador (Python)
+* [ ] Generador de Claves: Crear clave aleatoria de 32 bytes por proyecto.
+* [ ] Script de Build: Recorrer carpeta dist/assets. Leer binario. Cifrar con AES-EAX. Guardar como .dat. Eliminar originales.
+Tarea 5.1.2: Desencriptador (JS/Runner)
+* [ ] Middleware de Carga: Interceptar Assets.load.
+* [ ] Proceso:
+   1. Fetch del .dat.
+   2. Obtener ArrayBuffer.
+   3. Descifrar con CryptoJS y la clave (inyectada ofuscada).
+   4. Crear Blob URL de la imagen descifrada.
+   5. Pasar URL a Pixi.
+Hito 5.2: Empaquetado Zero-Install
+Meta: Un solo .exe.
+Tarea 5.2.1: Sidecar Python
+* [ ] PyInstaller: Compilar el backend Python a un ejecutable backend.exe (standalone).
+* [ ] Tauri Config: Añadir backend.exe a la lista externalBin en tauri.conf.json.
+* [ ] Boot: Configurar Tauri para que lance backend.exe silenciosamente al arrancar la app.
+Hito 5.3: Módulo Forense
+* [ ] Script Aislado: Crear tools/decrypt_forensic.py.
+* [ ] Lógica: Inverso exacto del Tarea 5.1.1. Debe requerir entrada manual de la clave maestra (que tú custodias).

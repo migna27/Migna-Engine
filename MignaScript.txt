@@ -1,0 +1,155 @@
+﻿📘 Manual de Referencia: MignaScript (.mn)
+Versión: 1.1
+Extensión: .mn
+Codificación: UTF-8
+MignaScript es un lenguaje declarativo diseñado para ser leído y escrito por humanos. Prioriza la legibilidad sobre la complejidad técnica.
+1. Reglas Fundamentales
+1. Línea por Acción: Cada línea de texto representa una instrucción.
+2. Comandos: Comienzan con @.
+3. Argumentos: Usan el formato clave=valor. Si el valor tiene espacios, usa comillas "valor con espacios".
+4. Comentarios: Todo lo que siga a // es ignorado por el motor.
+2. Narrativa y Diálogos
+Diálogo Básico
+El formato es Nombre: "Texto".
+// Diálogo estándar
+Ana: "Hola, ¿cómo estás hoy?"
+
+// Narrador (Sin nombre visible)
+"El viento soplaba con fuerza."
+
+// Diálogo interno (Pensamiento)
+// (Esto depende del estilo CSS definido en el GUI Designer)
+*Ana*: "Espero que no me haya visto..."
+
+Texto Vivo (Inline Tags)
+Etiquetas que controlan cómo se muestra el texto mientras se escribe.
+* [wait=1.0]: Pausa la escritura X segundos.
+* [speed=0.2]: Cambia la velocidad de escritura temporalmente.
+* {variable}: Muestra el valor de una variable.
+* {"Opción A", "Opción B"}: Variación aleatoria de texto (cada vez que juegas sale una distinta).
+Ana: "Espera... [wait=0.5] no estoy segura."
+Leo: "Tengo {dinero} monedas de oro."
+Ana: {"¡Qué alegría verte!", "Hola de nuevo.", "Oh, eres tú."}
+
+3. Visuales y Personajes
+Fondos (@bg)
+// Transición suave por defecto (dissolve)
+@bg file="parque_dia.webp" time=1.0
+
+// Transición específica
+@bg file="escuela.webp" transition=slide_left time=0.5
+
+Personajes (@char)
+Aquí está la actualización. Puedes usar Keywords (palabras clave) o Coordenadas.
+Posicionamiento por Keywords (Recomendado)
+El motor calcula automáticamente la posición basada en la resolución del juego.
+* izquierda / left (25% ancho)
+* centro / center (50% ancho)
+* derecha / right (75% ancho)
+* extrema_izquierda / far_left (0% ancho)
+* extrema_derecha / far_right (100% ancho)
+// Ana aparece en el centro
+@char id=ana file="ana_base.webp" pos=centro
+
+// Leo aparece a la derecha mirando a la izquierda (mirror)
+@char id=leo file="leo_feliz.webp" pos=derecha mirror=true
+
+Posicionamiento Preciso (Coordenadas)
+Para un control total píxel a píxel. z controla la profundidad (capas).
+@char id=ana x=540 y=600 z=10 scale=1.2
+
+Expresiones y Capas (Composite)
+Si usas archivos PSD importados.
+// Cambiar solo la expresión (ojos/boca) sin recargar el personaje
+@char id=ana set eyes="sorpresa" mouth="abierta"
+
+4. Cámara Cinematográfica (@camera)
+Controla el "Ojo" del jugador.
+// Zoom dramático a un personaje
+@camera zoom=1.5 target=ana duration=2.0 ease=power2.out
+
+// Paneo manual
+@camera pan x=200 y=0 duration=1.0
+
+// Resetear a vista normal
+@camera reset duration=1.0
+
+// Temblor de pantalla
+@camera shake power=5 duration=0.5
+
+5. Iluminación (@light)
+// Luz ambiental (tinte general de la escena)
+@light set type=ambient color=#3333ff brightness=0.5
+
+// Crear una luz puntual (antorcha, bombilla)
+@light create id=foco1 type=point x=cursor y=cursor color=#ffaa00 radius=300
+
+6. Audio (@audio, @bgm, @sfx)
+// Música de fondo (Loop automático)
+@bgm play file="tema_triste.ogg" volume=0.8 fade=2.0
+
+// Capas Adaptativas (Audio Vertical)
+// Añade percusión sincronizada a la música actual
+@bgm layer_add id=drums file="tema_triste_drums.ogg" sync=true
+
+// Efectos de sonido (One-shot)
+@sfx play file="puerta_abrir.wav"
+
+7. Flujo y Lógica
+Saltos y Etiquetas
+// Definir una etiqueta
+#decision_bosque
+
+// Saltar a etiqueta
+@jump to=decision_bosque
+
+Variables
+@set dinero = 50
+@set tiene_llave = false
+@set nombre_jugador = "Migna"
+
+Condicionales (IF/ELSE)
+Soporta bloques anidados mediante indentación.
+@if dinero >= 50
+   Vendedor: "Aquí tienes tu espada."
+   @set dinero = dinero - 50
+   @set tiene_espada = true
+@else
+   Vendedor: "No te alcanza."
+   @jump to=salida_tienda
+@endif
+
+Listas y Aleatoriedad (Roguelike)
+// Crear lista de eventos
+@list create id=eventos items=["robo", "hallazgo", "pelea"]
+
+// Ejecutar uno al azar
+@random_pick list=eventos output_var=evento_actual
+@jump to={evento_actual}
+
+8. Interacción del Jugador
+Menú de Decisiones (@choice)
+@choice
+   "Ir al Norte" -> #ir_norte
+   "Ir al Sur" -> #ir_sur
+   "Sobornar (50G)" -> #soborno if dinero >= 50
+
+Entrada de Texto (@input)
+@input var=nombre prompt="¿Cómo te llamas?"
+Hola {nombre}, bienvenido.
+
+Minijuegos (@minigame)
+@minigame src="poker/index.html" return_var=resultado
+@if resultado == "win"
+   "¡Ganaste la partida!"
+@endif
+
+9. Sistema
+// Guardar un checkpoint automático
+@save_checkpoint
+
+// Desbloquear un logro o imagen en la galería
+@unlock cg="beso_final"
+
+// Mensaje flotante (Toast)
+@toast "Partida Guardada"

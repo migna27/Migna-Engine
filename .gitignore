@@ -1,0 +1,29 @@
+# Python
+venv/
+*.pyc
+__pycache__/
+.DS_Store
+
+# Node
+frontend/node_modules/
+frontend/.svelte-kit/
+frontend/build/
+
+# SvelteKit
+.svelte-kit/
+
+#IDE
+.idea/
+.vscode/
+
+# NPM
+package-lock.json
+npm-debug.log*
+debug.log*
+npm-debug.log*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/

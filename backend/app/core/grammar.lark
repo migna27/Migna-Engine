@@ -1,0 +1,13 @@
+?start: (dialogue_node | command_node | _NEWLINE)*
+
+dialogue_node: WORD ":" ESCAPED_STRING _NEWLINE?
+
+command_node: "@" WORD (key_value_pair)* _NEWLINE?
+
+key_value_pair: WORD "=" (WORD | ESCAPED_STRING)
+
+%import common.WORD
+%import common.ESCAPED_STRING
+%import common.WS
+%import common.NEWLINE -> _NEWLINE
+%ignore WS
